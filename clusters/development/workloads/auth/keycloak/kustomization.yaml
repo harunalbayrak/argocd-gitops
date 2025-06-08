@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../../../../manifests/applications/auth/keycloak/base/
+
+namespace: keycloak-dev # Defined in clusters/development/config/namespaces.yaml
+
+namePrefix: dev- # Optional: dev-keycloak-main
+
+# commonLabels:
+#   environment: development
+
+patchesStrategicMerge:
+  - patch-config-dev.yaml
+  - patch-db-config-dev.yaml # Separate patch for DB connection details
+
+# Secret for Keycloak admin user (the operator usually creates one, but you might want to manage it)
+# Or, more importantly, the secret for the PostgreSQL database credentials for Keycloak.
+# This secret needs to be created MANUALLY or via a Job (for the DB user).
+# The Percona operator creates its own admin secrets for PostgreSQL.
+# We need to create a user and database within PostgreSQL for Keycloak to use.
+# This can be done with a Kubernetes Job after PostgreSQL is up,
+# or manually if preferred for dev.
+
+# For now, let's assume a secret named 'keycloak-db-credentials-dev' will exist in 'keycloak-dev' namespace.
+# It should contain 'username' and 'password' keys.
+# We will create this secret definition in a secrets.sops.yaml file later.
+# Example structure of the secret (unencrypted for illustration):
+# ---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: keycloak-db-credentials-dev
+#   namespace: keycloak-dev
+# type: Opaque
+# stringData:
+#   username: keycloak_dev_user
+#   password: "a_very_secure_password_for_dev" # Store encrypted with SOPS
+#   # For Keycloak operator using existing secret:
+#   # DB_USERNAME: keycloak_dev_user
+#   # DB_PASSWORD: "a_very_secure_password_for_dev"
+#   # POSTGRES_USER: keycloak_dev_user (if using bitnami/keycloak chart with existing secret)
+#   # POSTGRES_PASSWORD: "a_very_secure_password_for_dev"

@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: <YOUR_GIT_REPOSITORY_URL> # Replace with your Git repository URL
+    path: clusters/development/workloads/auth/keycloak # Path to the Kustomize overlay
+    targetRevision: HEAD
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keycloak-dev # Should match Kustomize overlay's namespace
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Keycloak depends on PostgreSQL. This app should ideally sync after PostgreSQL is ready.
+      # ArgoCD sync waves or other coordination might be needed for strict dependencies.
+      # For now, we rely on operators being idempotent and retrying.
+    # retry:
+    #   limit: 5
+    #   backoff:
+    #     duration: 10s # Longer backoff as DB might take time
+    #     factor: 2
+    #     maxDuration: 5m
+
+  # ignoreDifferences: # Useful if the operator updates status fields frequently
+  # - group: k8s.keycloak.org
+  #   kind: Keycloak
+  #   jsonPointers:
+  #   - /status

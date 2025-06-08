@@ -1,0 +1,62 @@
+controller:
+  componentName: "jenkins-controller-dev"
+  admin:
+    username: "admin-dev" # If you want a different admin username for dev
+
+  # JCasC configurations specific to dev
+  JCasC:
+    configScripts:
+      dev-settings: |
+        jenkins:
+          systemMessage: "DEVELOPMENT Jenkins Instance - Managed by GitOps"
+
+  resources: # Potentially smaller resources for dev
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  persistence:
+    size: "4Gi" # Smaller disk for dev Jenkins
+
+  ingress:
+    enabled: true
+    hostName: "jenkins.dev.yourdomain.com" # **REPLACE with your dev domain**
+
+agent:
+  podTemplates: {} # Clear base pod templates if dev uses completely different ones or none by default
+  # Add dev-specific pod templates if needed, or manage them entirely via JCasC ConfigMap.
+
+# Example of adding a ConfigMap for JCasC and mounting it
+# This ConfigMap would be created separately (e.g., in this directory or via another Kustomize base)
+# controller:
+#   additionalExistingConfigMaps:
+#     - name: "jenkins-jcasc-config-dev"
+#       mountPath: "/var/jenkins_home/casc_configs/" # JCasC will discover *.yaml from here
+#       subPath: "" # Mount the entire ConfigMap content
+#
+# ---
+# (Example of the ConfigMap - this would be a separate YAML file, perhaps sops encrypted if sensitive)
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: jenkins-jcasc-config-dev
+#   namespace: jenkins-dev # Must be in the same namespace as Jenkins
+# data:
+#   01-jenkins-system.yaml: |
+#     jenkins:
+#       systemMessage: "Dev Jenkins via JCasC ConfigMap"
+#   02-security.yaml: |
+#     jenkins:
+#       securityRealm:
+#         local:
+#           users:
+#           - id: "jcasc-admin"
+#             password: "somepassword" # BAD! Use secrets for passwords with JCasC
+#       authorizationStrategy:
+#         globalMatrix:
+#           permissions:
+#             - "Overall/Read:authenticated"
+#             - "Overall/Administer:jcasc-admin"

@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jenkins-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: <YOUR_GIT_REPOSITORY_URL> # Replace with your Git repository URL
+    targetRevision: HEAD # Or the branch ArgoCD should track
+    chart: jenkins # Name of the Helm chart
+    # Helm repository URL for Jenkins
+    helm:
+      releaseName: jenkins-dev
+      valueFiles:
+        - /manifests/helm-charts/jenkins/values.yaml # Path within THIS Git repo
+        - /clusters/development/workloads/tools/jenkins/values.yaml # Path within THIS Git repo
+
+  source:
+    repoURL: https://charts.jenkins.io
+    chart: jenkins
+    targetRevision: "4.5.0" # Specify the Jenkins Helm chart version you want to use
+    helm:
+      valueFiles:
+        - manifests/helm-charts/jenkins/values.yaml
+        - clusters/development/workloads/tools/jenkins/values.yaml
+      releaseName: jenkins-dev # Helm release name
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jenkins-dev # Namespace where Jenkins will be installed
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

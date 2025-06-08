@@ -1,0 +1,15 @@
+apiVersion: k8s.keycloak.org/v2alpha1 # Must match the API version in the base
+kind: Keycloak
+metadata:
+  name: keycloak-main # Must match the name in the base
+  # namespace: keycloak-dev # Applied by kustomization.yaml
+spec:
+  db:
+    host: "dev-pg-main-pgbouncer.percona-dev.svc.cluster.local" # Adjust if your Percona service name is different
+    database: "keycloak_dev_db" # Name of the database for Keycloak in PostgreSQL
+    usernameSecret:
+      name: "keycloak-db-credentials-dev" # Name of the K8s Secret in 'keycloak-dev' ns
+      key: "username" # Key within the secret for the username
+    passwordSecret:
+      name: "keycloak-db-credentials-dev" # Name of the K8s Secret in 'keycloak-dev' ns
+      key: "password" # Key within the secret for the password

@@ -1,0 +1,28 @@
+apiVersion: redis.com/v1alpha1 # **VERIFY THIS (must match base)**
+kind: Redis # **VERIFY THIS (must match base)**
+metadata:
+  name: redis-cache # Must match the name in the base
+  # namespace: redis-dev # Applied by kustomization.yaml
+spec:
+  # For development, a smaller setup might be sufficient
+  size: 1 # e.g., a single standalone instance for dev
+  # mode: Standalone # If your operator supports this for a single instance
+  # persistence: # Disable persistence for dev cache to save resources/time
+  #   enabled: false
+  # Or use a very small PVC if enabled:
+  # storage:
+  #   persistentVolumeClaim:
+  #     resources:
+  #       requests:
+  #         storage: 500Mi
+  # resources:
+  #   requests:
+  #     memory: "128Mi"
+  #     cpu: "50m"
+  #   limits:
+  #     memory: "256Mi"
+  #     cpu: "100m"
+  # redisExporter:
+  #   enabled: false # May not need exporter for dev
+  # auth: # Example if operator takes password directly (less common, check docs)
+  #   password: "dev_password_only_for_testing" # NOT FOR PRODUCTION

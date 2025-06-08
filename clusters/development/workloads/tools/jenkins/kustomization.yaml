@@ -1,0 +1,21 @@
+# clusters/development/workloads/tools/jenkins/kustomization.yaml
+# (OPTIONAL - if Kustomizing Helm output, otherwise ArgoCD handles Helm directly)
+# apiVersion: kustomize.config.k8s.io/v1beta1
+# kind: Kustomization
+#
+# namespace: jenkins-dev
+#
+# helmCharts:
+# - name: jenkins
+#   repo: https://charts.jenkins.io
+#   version: <CHART_VERSION> # e.g., 4.5.0
+#   releaseName: jenkins-dev
+#   namespace: jenkins-dev
+#   valuesFile: values.yaml # This would merge the dev-specific values
+#   # includeCRDs: false
+#
+# resources:
+#   # - jenkins-jcasc-config-dev.yaml # If managing the JCasC ConfigMap here
+#
+# patchesStrategicMerge:
+#   # - patch-some-helm-output.yaml # If you need to patch the rendered Helm chart output

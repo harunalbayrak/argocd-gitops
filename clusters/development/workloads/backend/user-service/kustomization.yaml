@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../../../../manifests/applications/backend/user-service/base/
+
+namespace: user-service-dev
+
+namePrefix: dev-
+
+# commonLabels:
+#   environment: development
+
+images:
+  # Override the image tag for development, e.g., to use a feature branch image
+  # Or if the base uses 'latest', this ensures a specific version for this env.
+  - name: your-container-registry/user-service # Must match the image name in base deployment.yaml
+    newTag: dev-latest # Or a specific commit SHA or branch name
+
+configMapGenerator:
+  - name: user-service-config # This name will be prefixed by Kustomize (e.g., dev-user-service-config)
+    behavior: merge # Merge with the base ConfigMap
+    literals:
+      # Development specific overrides for ConfigMap data
+      - LOG_LEVEL="debug"
+      # --- Database Connection (points to Percona in percona-dev namespace) ---
+      # Assumes PerconaPGCluster 'dev-pg-main' has pgbouncer service
+      - DB_HOST="dev-pg-main-pgbouncer.percona-dev.svc.cluster.local"
+      - DB_PORT="5432" # Default pgbouncer/postgres port
+      - DB_USER="user_service_dev_db_user" # User to be created in PostgreSQL for this service
+      - DB_NAME="user_service_dev_db"      # Database to be created in PostgreSQL
+      - DB_SSL_MODE="disable" # For dev, SSL might be disabled
+      # --- Redis Connection (points to Redis in redis-dev namespace) ---
+      # Assumes Redis CR 'dev-redis-cache' has a service, e.g. 'dev-redis-cache-master' or just 'dev-redis-cache'
+      - REDIS_HOST="dev-redis-cache-master.redis-dev.svc.cluster.local" # Adjust service name as per Redis operator
+      - REDIS_PORT="6379"
+      # --- Keycloak Connection (points to Keycloak in keycloak-dev namespace) ---
+      # Assumes Keycloak CR 'dev-keycloak-main' has a service
+      - KEYCLOAK_AUTH_SERVER_URL="http://dev-keycloak-main.keycloak-dev.svc.cluster.local/auth"
+      - KEYCLOAK_REALM="development_realm" # Realm for dev
+      - KEYCLOAK_CLIENT_ID="user-service-dev-client"
+      # --- Product Service URL (if applicable) ---
+      # - PRODUCT_SERVICE_URL="http://dev-product-service.product-service-dev.svc.cluster.local:80"
+    options:
+      disableNameSuffixHash: true # Keep ConfigMap name predictable
+
+patchesStrategicMerge:
+  - patch-deployment-dev.yaml
+
+# If user-service needs secrets (DB_PASSWORD, KEYCLOAK_CLIENT_SECRET, REDIS_PASSWORD):
+# Add a secrets.sops.yaml file here and reference it.
+# For now, we are putting placeholders in ConfigMap for user/db names.
+# Passwords MUST come from secrets.
+# We'll need a secrets.sops.yaml in this directory for those.

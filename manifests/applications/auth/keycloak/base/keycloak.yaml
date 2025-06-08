@@ -1,0 +1,18 @@
+apiVersion: k8s.keycloak.org/v2alpha1 # Verify API version from Keycloak Operator docs
+kind: Keycloak
+metadata:
+  name: keycloak-main # Base name for the Keycloak instance
+  # The namespace will be set by the overlay's kustomization.yaml
+spec:
+  instances: 1 # Base default, can be overridden by overlays for HA
+  db:
+    vendor: postgres
+    host: "keycloak-db-host-placeholder" # e.g., dev-pg-main-pgbouncer.percona-dev.svc.cluster.local
+    database: "keycloak_db_placeholder"
+    usernameSecret:
+      name: "keycloak-db-credentials" # Name of the K8s Secret holding DB user/pass
+      key: "username"
+    passwordSecret:
+      name: "keycloak-db-credentials" # Name of the K8s Secret holding DB user/pass
+      key: "password"
+

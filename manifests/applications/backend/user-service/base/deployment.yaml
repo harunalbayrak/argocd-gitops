@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service # Base name
+  labels:
+    app.kubernetes.io/name: user-service
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 1 # Base default, overridden by overlays
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: user-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: user-service
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+        - name: user-service
+          image: your-container-registry/user-service:latest # **REPLACE with actual image**
+          imagePullPolicy: IfNotPresent # Or Always for 'latest' tag in dev
+          ports:
+            - name: http
+              containerPort: 8080 # Port the application listens on
+          envFrom:
+            - configMapRef:
+                name: user-service-config # Will be prefixed in overlays, e.g., dev-user-service-config
+          resources: # Base default resources
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz # Or your app's liveness endpoint
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz # Or your app's readiness endpoint
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

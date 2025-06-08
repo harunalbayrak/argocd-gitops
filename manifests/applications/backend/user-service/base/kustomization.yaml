@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  # - (optional) hpa.yaml # HorizontalPodAutoscaler base definition
+
+# commonLabels:
+#   app.kubernetes.io/part-of: my-platform
+#   app.kubernetes.io/version: "0.1.0" # Base version, can be set by CI

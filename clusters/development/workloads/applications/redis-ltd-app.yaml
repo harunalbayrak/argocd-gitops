@@ -1,8 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: apps-development # Signifies applications for the 'development' environment/cluster
-  namespace: argocd # Deployed into argocd namespace by the root-app
+  name: redis-dev # Changed from redis-ltd-dev for consistency
+  namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -10,16 +10,22 @@ spec:
 
   source:
     repoURL: <YOUR_GIT_REPOSITORY_URL> # Replace with your Git repository URL
-    path: clusters/development/workloads/applications
+    path: clusters/development/workloads/cache/redis # Path to the Kustomize overlay
     targetRevision: HEAD
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: redis-dev # Should match Kustomize overlay's namespace
 
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true # Child applications might need this if their target ns isn't pre-created
+      - CreateNamespace=true
+    # retry:
+    #   limit: 3
+    #   backoff:
+    #     duration: 5s
+    #     factor: 2
+    #     maxDuration: 1m

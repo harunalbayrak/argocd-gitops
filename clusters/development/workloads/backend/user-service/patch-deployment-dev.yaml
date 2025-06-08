@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service # Must match base name
+  # namespace: user-service-dev # Applied by kustomization.yaml
+spec:
+  replicas: 1 # For development, 1 replica is usually sufficient
+  template:
+    spec:
+      containers:
+        - name: user-service # Must match container name in base
+          imagePullPolicy: Always # For dev, ensure 'latest' or branch tags are always pulled
+          resources: # Dev specific resources
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          env:
+            # Example of adding an environment variable from a secret
+            # These secrets (user-service-credentials, keycloak-client-credentials)
+            # would need to be defined in a secrets.sops.yaml file in this directory.
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-service-db-credentials-dev # Will be prefixed, e.g., dev-user-service-db-credentials
+                  key: password
+            - name: REDIS_PASSWORD # If Redis is password protected
+              valueFrom:
+                secretKeyRef:
+                  name: user-service-redis-credentials-dev # e.g., dev-user-service-redis-credentials
+                  key: password
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: user-service-keycloak-credentials-dev # e.g., dev-user-service-keycloak-credentials
+                  key: clientSecret
+          # You can also override probes for faster startup in dev if needed
+          # livenessProbe:
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   initialDelaySeconds: 2
+          #   periodSeconds: 5

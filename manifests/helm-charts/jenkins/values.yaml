@@ -1,0 +1,121 @@
+controller:
+  # image: "jenkins/jenkins" # Default image
+  # tag: "lts-jdk11" # Specify a stable tag
+  componentName: "jenkins-controller"
+  adminUser: "admin" # Default admin user, password will be handled via existingSecret or auto-generated
+
+  # Plugin installation
+  installPlugins:
+    - kubernetes:4.1.0 # Example, use desired version
+    - workflow-aggregator:2.6
+    - git:5.2.0
+    - configuration-as-code:1708.v7207355e263c
+    # - blueocean:1.27.7 # Uncomment if you want Blue Ocean UI
+    # Add other essential plugins
+
+  # JCasC - Jenkins Configuration as Code
+  # See https://plugins.jenkins.io/configuration-as-code/
+  # We will manage JCasC files via a ConfigMap mounted into the controller.
+  JCasC:
+    enabled: true
+    defaultConfig: true # Use default config provided by the chart (can be disabled if providing all via configScripts)
+    # configScripts:
+    #   welcome-message: |
+    #     jenkins:
+    #       systemMessage: "Welcome to Jenkins on Kubernetes - Managed by GitOps!"
+    #   security-setup: |
+    #     jenkins:
+    #       securityRealm:
+    #         local:
+    #           allowsSignup: false
+    #           users:
+    #             - id: "ops-admin"
+    #               password: "${ADMIN_PASSWORD_ENV_VAR}" # Password from an env var
+    #       authorizationStrategy:
+    #         loggedInUsersCanDoAnything:
+    #           allowanonymousread: false
+    #   # Add more JCasC configurations here for global settings, tools, etc.
+
+  # Resources for the Jenkins controller pod
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+  # Persistence for Jenkins home
+  persistence:
+    enabled: true
+    # storageClass: "" # Explicitly set if not using default, or set to "-" to disable dynamic provisioning
+    size: "8Gi"
+    # accessMode: ReadWriteOnce
+
+  # Service type for accessing Jenkins UI
+  serviceType: ClusterIP # Expose via Ingress
+  # servicePort: 8080
+
+  # RBAC settings
+  serviceAccount:
+    create: true
+    # name: ""
+    # annotations: {}
+
+  # Script approval (can be pre-approved here or managed via JCasC)
+  # scriptApproval:
+  #   - "method groovy.json.JsonSlurperClassic parseText java.lang.String"
+
+  # Security settings (some can be managed by JCasC)
+  # csrf:
+  #   defaultCrumbIssuer:
+  #     enabled: true
+  #     proxyCompatability: true # If behind a reverse proxy
+
+# Agent (Kubernetes plugin) configuration
+agent:
+  enabled: true # If using Kubernetes plugin for dynamic agents
+  # defaultsProviderTemplateName: "" # Can specify a PodTemplate name for default agent settings
+  # resources:
+  #   requests:
+  #     cpu: "500m"
+  #     memory: "512Mi"
+  #   limits:
+  #     cpu: "1"
+  #     memory: "1Gi"
+  # You can define podTemplates here or via JCasC in a ConfigMap.
+  # Example podTemplate:
+  # podTemplates:
+  #   maven-agent: |
+  #     - name: maven
+  #       label: maven
+  #       containers:
+  #       - name: maven
+  #         image: maven:3.8-openjdk-11
+  #         command:
+  #         - cat
+  #         ttyEnabled: true
+  #         resources:
+  #           requests:
+  #             memory: "512Mi"
+  #             cpu: "0.5"
+  #           limits:
+  #             memory: "1Gi"
+  #             cpu: "1"
+  #       - name: jnlp
+  #         image: jenkins/inbound-agent:latest # Use a specific tag
+  #         resources:
+  #           requests:
+  #             memory: "256Mi"
+  #             cpu: "0.1"
+  #           limits:
+  #             memory: "512Mi"
+  #             cpu: "0.5"
+
+# Backup configuration (optional, chart has some basic support)
+# backup:
+#   enabled: false
+
+# NetworkPolicy (if your CNI supports it)
+# networkPolicy:
+#   enabled: false

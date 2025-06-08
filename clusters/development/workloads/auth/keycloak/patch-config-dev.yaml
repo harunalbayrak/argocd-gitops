@@ -1,0 +1,17 @@
+apiVersion: k8s.keycloak.org/v2alpha1 # Must match the API version in the base
+kind: Keycloak
+metadata:
+  name: keycloak-main # Must match the name in the base
+  # namespace: keycloak-dev # Applied by kustomization.yaml
+spec:
+  instances: 1 # For dev, 1 instance is usually fine
+  # image: quay.io/keycloak/keycloak:22.0.1 # Pinning to a specific version for dev
+  # resources:
+  #   requests:
+  #     memory: "768Mi"
+  #     cpu: "300m"
+  #   limits:
+  #     memory: "1.5Gi"
+  #     cpu: "750m"
+  # unsecureFeatures: # Example
+  #   - UPLOAD_SCRIPTS # If you need to upload custom scripts in dev
