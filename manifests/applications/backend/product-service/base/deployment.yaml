@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service # Base name
+  labels:
+    app.kubernetes.io/name: product-service
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 1 # Base default, overridden by overlays
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: product-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: product-service
+        app.kubernetes.io/component: backend
+      # annotations:
+      #   prometheus.io/scrape: "true"
+      #   prometheus.io/port: "8081"
+    spec:
+      # serviceAccountName: product-service-sa
+      containers:
+        - name: product-service
+          image: your-container-registry/product-service:latest # **REPLACE with actual image**
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080 # Port the application listens on
+            # - name: metrics
+            #   containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: product-service-config # Will be prefixed
+            # - secretRef:
+            #     name: product-service-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10

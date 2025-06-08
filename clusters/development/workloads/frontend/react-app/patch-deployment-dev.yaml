@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-app # Match base name
+spec:
+  replicas: 1 # For development
+  template:
+    spec:
+      containers:
+        - name: react-app-nginx # Match container name
+          imagePullPolicy: Always # Ensure latest dev image is pulled
+          # resources: # Override resources for dev if needed
+          #   requests:
+          #     cpu: "25m"
+          #     memory: "32Mi"
+          #   limits:
+          #     cpu: "100m"
+          #     memory: "64Mi"

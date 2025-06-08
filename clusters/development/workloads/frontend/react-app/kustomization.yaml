@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../../../../manifests/applications/frontend/react-app/base/
+
+namespace: react-frontend-dev
+
+namePrefix: dev-
+
+# commonLabels:
+#   environment: development
+
+images:
+  - name: your-container-registry/react-frontend # Match base image name
+    newTag: dev-latest # Or a specific dev build tag
+
+configMapGenerator:
+  - name: react-app-config # Will be prefixed, e.g., dev-react-app-config
+    behavior: merge
+    literals:
+      # Development specific API URLs
+      - REACT_APP_USER_SERVICE_URL="http://dev-user-service.user-service-dev.svc.cluster.local:80"
+      - REACT_APP_PRODUCT_SERVICE_URL="http://dev-product-service.product-service-dev.svc.cluster.local:80"
+      - REACT_APP_KEYCLOAK_URL="http://dev-keycloak-main.keycloak-dev.svc.cluster.local/auth"
+      - REACT_APP_KEYCLOAK_REALM="development_realm" # Realm used in dev Keycloak
+      - REACT_APP_KEYCLOAK_CLIENT_ID="frontend-dev-client" # Client ID for frontend in dev Keycloak
+    options:
+      disableNameSuffixHash: true
+
+patchesStrategicMerge:
+  - patch-deployment-dev.yaml
+
+# (Optional) If you have an Ingress resource specific to dev for this app
+# resources:
+#   - ingress-dev.yaml

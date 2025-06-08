@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-app # Base name
+  labels:
+    app.kubernetes.io/name: react-app
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 1 # Base default, overridden by overlays
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: react-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: react-app
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+        - name: react-app-nginx
+          image: your-container-registry/react-frontend:latest # **REPLACE with actual image**
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80 # Nginx default port
+          envFrom:
+            # The ConfigMap will provide environment variables that can be
+            # substituted into nginx.conf or used by an entrypoint script
+            # to configure the React app's runtime config (e.g., inject into index.html).
+            - configMapRef:
+                name: react-app-config # Will be prefixed
+          resources: # Base default resources
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: / # Nginx should serve index.html at root
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # volumeMounts: # If serving a custom nginx.conf from a ConfigMap
+          # - name: nginx-config-volume
+          #   mountPath: /etc/nginx/conf.d/default.conf
+          #   subPath: default.conf
+      # volumes: # If serving a custom nginx.conf from a ConfigMap
+      # - name: nginx-config-volume
+      #   configMap:
+      #     name: react-app-nginx-config # Will be prefixed

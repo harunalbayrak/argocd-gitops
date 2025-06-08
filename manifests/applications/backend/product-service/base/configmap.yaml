@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: product-service-config # Base name
+  labels:
+    app.kubernetes.io/name: product-service
+    app.kubernetes.io/component: backend
+data:
+  DB_HOST: "db-host-placeholder"
+  DB_PORT: "5432"
+  DB_USER: "product-service-db-user-placeholder"
+  DB_NAME: "product_service_db_placeholder"
+  DB_SSL_MODE: "disable"
+
+  REDIS_HOST: "redis-host-placeholder"
+  REDIS_PORT: "6379"
+
+  # KEYCLOAK_AUTH_SERVER_URL: "http://keycloak-url-placeholder/auth" # If product-service needs Keycloak
+  # KEYCLOAK_REALM: "your-realm-placeholder"
+  # KEYCLOAK_CLIENT_ID: "product-service-client"
+
+  USER_SERVICE_URL: "http://user-service-url-placeholder" # If it calls user-service
+
+  LOG_LEVEL: "info"
+  SERVICE_PORT: "8080"

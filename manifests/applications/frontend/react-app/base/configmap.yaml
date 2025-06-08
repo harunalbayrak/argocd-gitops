@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: react-app-config # Base name
+  labels:
+    app.kubernetes.io/name: react-app
+    app.kubernetes.io/component: frontend
+data:
+  # These will be exposed as environment variables to the Nginx container
+  # and used by an entrypoint script or Nginx itself to configure the React app.
+  REACT_APP_USER_SERVICE_URL: "http://user-service-url-placeholder"
+  REACT_APP_PRODUCT_SERVICE_URL: "http://product-service-url-placeholder"
+  REACT_APP_KEYCLOAK_URL: "http://keycloak-url-placeholder/auth"
+  REACT_APP_KEYCLOAK_REALM: "keycloak-realm-placeholder"
+  REACT_APP_KEYCLOAK_CLIENT_ID: "frontend-client-placeholder"
+
+  # (Optional) If providing a custom nginx.conf template via this ConfigMap
+  # default.conf: |
+  #   server {
+  #     listen 80;
+  #     server_name localhost;
+  #
+  #     root /usr/share/nginx/html;
+  #     index index.html index.htm;
+  #
+  #     location / {
+  #       try_files $uri $uri/ /index.html;
+  #     }
+  #
+  #     # Example of substituting environment variables if nginx image supports envsubst on startup
+  #     location /config.js {
+  #       alias /usr/share/nginx/html/config-template.js; # Assuming a template file exists
+  #       # Requires an entrypoint script in Docker image to run envsubst
+  #     }
+  #
+  #     # Disable caching for config files if they are dynamically generated
+  #     location = /env-config.js {
+  #         add_header Cache-Control "no-cache, no-store, must-revalidate";
+  #         expires -1;
+  #     }
+  #   }
