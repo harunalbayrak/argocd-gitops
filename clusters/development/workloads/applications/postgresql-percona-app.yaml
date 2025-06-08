@@ -1,0 +1,35 @@
+# clusters/development/workloads/_applications/postgresql-percona-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql-percona-dev
+  namespace: argocd # This ArgoCD Application object itself lives in the 'argocd' namespace
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: <YOUR_GIT_REPOSITORY_URL> # Replace with your Git repository URL
+    path: clusters/development/workloads/database/postgresql # Path to the Kustomize overlay
+    targetRevision: HEAD
+
+  destination:
+    server: https://kubernetes.default.svc
+    # The resources defined by the Kustomize overlay (PerconaPGCluster)
+    # will be deployed into the namespace specified in its kustomization.yaml ('percona-dev')
+    namespace: percona-dev # This should match the Kustomize overlay's namespace
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true # Ensures the 'percona-dev' namespace is created if it doesn't exist
+      # - PruneLast=true # If managing CRDs with this app, not typical for CR instances
+    # retry:
+    #   limit: 5
+    #   backoff:
+    #     duration: 5s
+    #     factor: 2
+    #     maxDuration: 3m

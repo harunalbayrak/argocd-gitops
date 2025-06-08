@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: keycloak-operator
+  namespace: operators # Assuming operators are installed in 'operators' namespace
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: keycloak-operator # Placeholder, please verify
+  source: community-operators # Often found in community-operators
+  sourceNamespace: olm

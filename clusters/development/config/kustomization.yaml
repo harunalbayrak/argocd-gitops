@@ -1,0 +1,19 @@
+# clusters/development/config/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Namespaces specific to the development cluster (application namespaces, etc.)
+  - namespaces.yaml # We will create this file next
+
+  # Operator configurations (subscriptions, operator groups) for the development cluster
+  - ./operators/ # This points to clusters/development/config/operators/kustomization.yaml
+
+  # Other shared configurations for this cluster can be added here
+  # - ./ingress/ # Example for Ingress controller config
+  # - ./monitoring/ # Example for monitoring tools config
+  # - ../../../manifests/shared/rbac/ # If RBAC is shared and not cluster-specific enough for an overlay
+
+# commonLabels:
+#   environment: development
+#   cluster: dev-cluster

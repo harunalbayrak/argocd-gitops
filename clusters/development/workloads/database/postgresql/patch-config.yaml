@@ -1,0 +1,42 @@
+apiVersion: pgv2.percona.com/v2 # Must match the API version in the base
+kind: PerconaPGCluster
+metadata:
+  name: pg-main # Must match the name in the base to be patched
+  # namespace: percona-dev # Namespace is applied by kustomization.yaml's 'namespace' field
+spec:
+  instances:
+    - name: instance1 # Must match the instance set name in base
+      replicas: 1 # For dev, 1 replica might be enough
+      dataVolumeClaimSpec:
+        resources:
+          requests:
+            storage: 10Gi # Dev might need a bit more or less than base
+      # resources: # Specific resources for dev
+      #   requests:
+      #     memory: "1Gi"
+      #     cpu: "500m"
+      #   limits:
+      #     memory: "2Gi"
+      #     cpu: "1"
+  proxy:
+    pgBouncer:
+      replicas: 1 # For dev, 1 pgbouncer replica
+      # resources:
+      #   requests:
+      #     memory: "64Mi" # Smaller for dev
+      #     cpu: "50m"
+      #   limits:
+      #     memory: "128Mi"
+      #     cpu: "100m"
+  # backups: # Disable or use simpler PVC based backups for dev
+  #   pgbackrest:
+  #     repos:
+  #       - name: repo1
+  #         # volume: # Example for PVC based repo storage (for local/dev)
+  #         #   volumeClaimSpec:
+  #         #     accessModes: [ "ReadWriteOnce" ]
+  #         #     resources:
+  #         #       requests:
+  #         #         storage: 5Gi # Smaller backup repo for dev
+  # pmm:
+  #   enabled: false # PMM might be disabled for dev to save resources

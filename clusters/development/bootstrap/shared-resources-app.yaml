@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shared-resources-dev
+  namespace: argocd # Deployed into argocd namespace by the root-app
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: <YOUR_GIT_REPOSITORY_URL> # Replace with your Git repository URL
+    path: clusters/development/config # Points to the kustomization for dev cluster config
+    targetRevision: HEAD
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system # Or 'default', or 'operators' if all config is for them.
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,88 @@
+# manifests/applications/database/postgresql-percona/base/perconapgcluster.yaml
+apiVersion: pgv2.percona.com/v2 # Verify API version from Percona Operator docs
+kind: PerconaPGCluster
+metadata:
+  name: pg-main # This name will be part of the service names, etc.
+  # The namespace will be set by the overlay's kustomization.yaml
+spec:
+  # Users to be created. Secrets for these users will be managed separately or by the operator.
+  # The operator typically creates a default superuser.
+  # For application users, it's often better to create them via a Job after cluster is up,
+  # or use the operator's mechanisms if available for declarative user/db management.
+  # Let's assume the operator creates a default admin user, and app users are managed elsewhere or via SQL.
+
+  # Database Initialization (optional, if operator supports it directly in CR)
+  # Some operators allow specifying initial databases.
+  # Example (syntax might vary for Percona):
+  # bootstrap:
+  #   initdb:
+  #     database: app_db_main
+  #     owner: app_user
+
+  # Instance Sets (defines the PostgreSQL instances)
+  instances:
+    - name: instance1 # Default instance set
+      replicas: 1 # Base default, can be overridden by overlays
+      dataVolumeClaimSpec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 5Gi # Base default storage
+      # resources: # Base default resource requests/limits (optional, can be set in overlay)
+      #   requests:
+      #     memory: "512Mi"
+      #     cpu: "250m"
+      #   limits:
+      #     memory: "1Gi"
+      #     cpu: "500m"
+
+  # PostgreSQL version (should align with what the operator supports)
+  postgresVersion: 15 # Example, verify supported versions
+
+  # Proxy (pgBouncer is common with Percona)
+  proxy:
+    pgBouncer:
+      image: perconalab/pgbouncer:1.18-postgresql-15 # Verify image and tag
+      replicas: 1 # Base default for pgbouncer
+      # resources: # Base default pgbouncer resources (optional)
+      #   requests:
+      #     memory: "128Mi"
+      #     cpu: "100m"
+      #   limits:
+      #     memory: "256Mi"
+      #     cpu: "200m"
+
+  # Backups (Configuration for pgBackRest - highly recommended for production)
+  # This is a placeholder; detailed backup config depends on storage, schedule, etc.
+  # backups:
+  #   pgbackrest:
+  #     image: perconalab/pgbackrest-repo:2.45-postgresql-15 # Verify image
+  #     repos:
+  #       - name: repo1
+  #         # s3: # Example for S3 storage
+  #         #   bucket: "your-pgbackrest-s3-bucket"
+  #         #   endpoint: "s3.amazonaws.com"
+  #         #   region: "us-east-1"
+  #         #   secret:
+  #         #     name: "pgbackrest-s3-creds" # K8s secret with AWS creds
+  #         volume: # Example for PVC based repo storage (for local/dev)
+  #           volumeClaimSpec:
+  #             accessModes: [ "ReadWriteOnce" ]
+  #             resources:
+  #               requests:
+  #                 storage: 10Gi
+  #     # Define backup schedules here
+
+  # PMM (Percona Monitoring and Management) integration (optional)
+  # pmm:
+  #   enabled: false
+  #   image: percona/pmm-client:2 # Verify image
+  #   serverHost: "pmm-server.monitoring.svc.cluster.local" # If PMM server is in k8s
+  #   # secretName: pmm-secret # Secret with PMM server API key
+
+  # Other spec fields as per PerconaPGCluster CRD documentation...
+  # - Patroni settings
+  # - PostgreSQL parameters (postgresql.conf)
+  # - Sidecars
+  # - Affinity/Tolerations

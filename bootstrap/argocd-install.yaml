@@ -1,0 +1,267 @@
+---
+# ArgoCD Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    name: argocd
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/part-of: argocd
+---
+# ArgoCD Installation using official manifests
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-install-script
+  namespace: argocd
+data:
+  install.sh: |
+    #!/bin/bash
+    set -e
+    
+    echo "Installing ArgoCD..."
+    
+    # Install ArgoCD core components
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    
+    # Wait for ArgoCD to be ready
+    echo "Waiting for ArgoCD to be ready..."
+    kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+    kubectl wait --for=condition=available --timeout=300s deployment/argocd-repo-server -n argocd
+    kubectl wait --for=condition=available --timeout=300s deployment/argocd-application-controller -n argocd
+    
+    echo "ArgoCD installation completed!"
+---
+# ArgoCD Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Enable insecure mode for easier access (disable in production)
+  server.insecure: "true"
+  
+  # Repository configuration
+  repositories: |
+    - type: git
+      url: https://github.com/your-org/argo-gitops-repository
+      name: gitops-repo
+  
+  # Application configuration
+  application.instanceLabelKey: argocd.argoproj.io/instance
+  
+  # Resource customizations
+  resource.customizations: |
+    networking.k8s.io/Ingress:
+      health.lua: |
+        hs = {}
+        hs.status = "Healthy"
+        return hs
+  
+  # URL configuration (update with your domain)
+  url: "https://argocd.your-domain.com"
+  
+  # Enable anonymous access for readonly operations (optional)
+  users.anonymous.enabled: "false"
+  
+  # Default project settings
+  policy.default: |
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, certificates, get, *, allow
+    p, role:readonly, clusters, get, *, allow
+    p, role:readonly, repositories, get, *, allow
+    g, argocd:readonly, role:readonly
+---
+# ArgoCD RBAC Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Default policy
+  policy.default: role:readonly
+  
+  # Policy rules
+  policy.csv: |
+    # Admin role
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, repositories, *, *, allow
+    p, role:admin, certificates, *, *, allow
+    p, role:admin, projects, *, *, allow
+    p, role:admin, accounts, *, *, allow
+    p, role:admin, gpgkeys, *, *, allow
+    
+    # Developer role
+    p, role:developer, applications, get, */*, allow
+    p, role:developer, applications, sync, */*, allow
+    p, role:developer, applications, action/*, */*, allow
+    p, role:developer, repositories, get, *, allow
+    p, role:developer, certificates, get, *, allow
+    
+    # Readonly role
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, repositories, get, *, allow
+    p, role:readonly, clusters, get, *, allow
+    p, role:readonly, certificates, get, *, allow
+    
+    # Group mappings (update with your groups)
+    g, argocd:admins, role:admin
+    g, argocd:developers, role:developer
+    g, argocd:viewers, role:readonly
+---
+# ArgoCD Server Service (LoadBalancer for external access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server-lb
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server-lb
+    app.kubernetes.io/part-of: argocd
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: argocd-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: https
+      port: 443
+      targetPort: 8080
+---
+# ArgoCD Ingress (alternative to LoadBalancer)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - argocd.your-domain.com
+      secretName: argocd-server-tls
+  rules:
+    - host: argocd.your-domain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+---
+# ArgoCD Admin Password Secret (optional - generates random password if not provided)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-initial-admin-secret
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-initial-admin-secret
+    app.kubernetes.io/part-of: argocd
+type: Opaque
+data:
+  # Default password: "admin123" (base64 encoded)
+  # Change this in production!
+  password: YWRtaW4xMjM=
+---
+# ArgoCD Projects for different environments
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: development
+  namespace: argocd
+spec:
+  description: Development Environment Project
+  sourceRepos:
+    - 'https://github.com/your-org/argo-gitops-repository'
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  roles:
+    - name: developer
+      description: Developer access to development apps
+      policies:
+        - p, proj:development:developer, applications, *, development/*, allow
+      groups:
+        - argocd:developers
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: staging
+  namespace: argocd
+spec:
+  description: Staging Environment Project
+  sourceRepos:
+    - 'https://github.com/your-org/argo-gitops-repository'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  roles:
+    - name: developer
+      description: Developer access to staging apps
+      policies:
+        - p, proj:staging:developer, applications, get, staging/*, allow
+        - p, proj:staging:developer, applications, sync, staging/*, allow
+      groups:
+        - argocd:developers
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: production
+  namespace: argocd
+spec:
+  description: Production Environment Project
+  sourceRepos:
+    - 'https://github.com/your-org/argo-gitops-repository'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  roles:
+    - name: admin
+      description: Admin access to production apps
+      policies:
+        - p, proj:production:admin, applications, *, production/*, allow
+      groups:
+        - argocd:admins

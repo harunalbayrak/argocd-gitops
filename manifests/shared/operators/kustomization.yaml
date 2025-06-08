@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ./operator-groups/common-operator-group.yaml
+  - ./subscriptions/percona-postgresql.yaml
+  - ./subscriptions/keycloak-operator.yaml
+  - ./subscriptions/redis-operator.yaml

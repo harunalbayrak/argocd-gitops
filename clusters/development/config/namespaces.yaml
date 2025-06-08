@@ -1,0 +1,83 @@
+# clusters/development/config/namespaces.yaml
+# Namespaces for applications and tools in the development cluster.
+---
+# Namespace for Percona PostgreSQL Operator and instances (if dedicated)
+# Or, if Percona instances go into their own app namespaces, this might be just for operator tools.
+# Let's assume Percona instances will be deployed into this 'percona-dev' namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: percona-dev
+  labels:
+    environment: development
+    app-group: database
+    # goldilocks.fairwinds.com/enabled: "true" # Optional for VPA recommendations
+---
+# Namespace for Keycloak
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: keycloak-dev
+  labels:
+    environment: development
+    app-group: auth
+    # goldilocks.fairwinds.com/enabled: "true"
+---
+# Namespace for Redis
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis-dev
+  labels:
+    environment: development
+    app-group: cache
+    # goldilocks.fairwinds.com/enabled: "true"
+---
+# Namespace for User Service
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: user-service-dev
+  labels:
+    environment: development
+    app-group: backend
+    # goldilocks.fairwinds.com/enabled: "true"
+---
+# Namespace for Product Service
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: product-service-dev
+  labels:
+    environment: development
+    app-group: backend
+    # goldilocks.fairwinds.com/enabled: "true"
+---
+# Namespace for React Frontend
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: react-frontend-dev
+  labels:
+    environment: development
+    app-group: frontend
+    # goldilocks.fairwinds.com/enabled: "true"
+---
+# Namespace for Jenkins (Controller and Agents, or just Controller)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jenkins-dev
+  labels:
+    environment: development
+    app-group: tools
+    # goldilocks.fairwinds.com/enabled: "true"
+# ---
+# (Optional) Namespace for Jenkins agents if they run in a separate namespace
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: jenkins-agents-dev
+#   labels:
+#     environment: development
+#     app-group: tools-aux

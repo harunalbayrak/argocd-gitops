@@ -1,0 +1,37 @@
+# clusters/development/workloads/database/postgresql/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Inherit from the base PerconaPGCluster definition
+bases:
+  - ../../../../../manifests/applications/database/postgresql-percona/base/
+
+# Namespace for this PostgreSQL instance in the development cluster
+namespace: percona-dev # This should match one of the namespaces defined earlier
+
+namePrefix: dev- # Optional: prefix to the resource name, e.g., 'dev-pg-main'
+
+# commonLabels:
+#   environment: development
+
+# Patches specific to the development environment
+patchesStrategicMerge:
+  - patch-config.yaml # We'll create this next
+
+# Secrets for PostgreSQL (e.g., application user passwords, PMM secret, S3 backup creds)
+# These would typically be SOPS encrypted files.
+# For example, a secret that Percona operator might use to create an application user,
+# or a secret for pgBackRest S3 access.
+# secretGenerator:
+# - name: pgbackrest-s3-creds-dev # Example
+#   behavior: merge # or replace
+#   files:
+#   - credentials.ini.sops # Encrypted s3 credentials
+#   options:
+#     disableNameSuffixHash: true
+# - name: app-user-creds-dev
+#   behavior: merge
+#   literals:
+#   - username=app_dev_user
+#   # Password should be in a .sops file or generated if operator supports it
+#   # For now, let's assume user management is manual or via a Job

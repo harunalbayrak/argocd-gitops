@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io # Ensures CRDs are deleted before the app
+spec:
+  project: default # Or a specific ArgoCD project if you've configured one
+
+  source:
+    repoURL: <YOUR_GIT_REPOSITORY_URL> # Replace with your Git repository URL
+    path: clusters/development/bootstrap # This app will manage other apps defined in this path
+    targetRevision: HEAD # Or a specific branch/tag
+
+  destination:
+    server: https://kubernetes.default.svc # Assumes ArgoCD is running in the same cluster it manages
+    namespace: argocd # Namespace where child ArgoCD Applications will be created
+
+  syncPolicy:
+    automated:
+      prune: true    # Deletes resources that are no longer in Git
+      selfHeal: true # Reverts cluster state to Git state if manually changed
+    syncOptions:
+      - CreateNamespace=true # Allows ArgoCD to create namespaces if they don't exist
+      # - PruneLast=true # Useful if you have CRDs managed by ArgoCD
+
+  # This root app will deploy other ArgoCD Application resources.
+  # We'll list them as resources in a kustomization.yaml within this path,
+  # or explicitly define them here if preferred (Kustomize is cleaner).

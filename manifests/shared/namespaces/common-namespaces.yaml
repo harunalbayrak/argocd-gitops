@@ -1,0 +1,29 @@
+# manifests/shared/namespaces/common-namespaces.yaml
+# These are foundational namespaces that might be needed early in the cluster setup.
+# Application-specific namespaces are typically defined in cluster-specific configuration.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    name: argocd
+    # Optionally add labels for tools like Goldilocks or other policies
+    # goldilocks.fairwinds.com/enabled: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: olm
+  labels:
+    name: olm
+    # olm.operatorframework.io/managed: "true" # Common label for OLM managed namespaces
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: operators
+  labels:
+    name: operators
+    # This is a common namespace to install operators if not using 'olm' or a specific one.
+    # Ensure OperatorGroups are configured to watch this or other namespaces as needed.
